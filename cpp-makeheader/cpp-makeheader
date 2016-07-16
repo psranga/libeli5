@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Needs clang-format in the default path. On Ubuntu 16.04 etc do:
+#   sudo apt-get install clang-format
+# and you should be good to go.
+
+set -e
+
+MYDIR=$(dirname $0)
+CLANG_FORMAT="{BasedOnStyle: Google, ColumnLimit: 100000, \
+  AllowShortFunctionsOnASingleLine: false, AlwaysBreakTemplateDeclarations: false}"
+clang-format -style="$CLANG_FORMAT" | \
+  ${MYDIR}/cpp-makeheader.py | \
+  clang-format -style=Google

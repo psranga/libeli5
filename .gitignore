@@ -1,0 +1,5 @@
+bin
+a.out
+x
+.*sw*
+*_test_main
