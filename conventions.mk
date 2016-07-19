@@ -1,7 +1,15 @@
+# Compute the directory containing this file.
 TOPDIR := $(dir $(lastword $(MAKEFILE_LIST)))
 
-CXXFLAGS+=-std=c++11 -I$(TOPDIR)
+# LibELI5 uses C++11 features.
+CXXFLAGS+=-std=c++11
 
+# Add directory containing headers. Using C++ code can do:
+#   #incldue <eli5/file.h>
+CXXFLAGS+=-I$(TOPDIR)/include
+
+# Utility that generates headers from a C++ source file that follows
+# simple conventions.
 MAKEHEADER=$(TOPDIR)cpp-makeheader/cpp-makeheader
 
 # Make a header from a cc file automatically.
