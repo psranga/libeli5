@@ -2,7 +2,7 @@
 TOPDIR := $(dir $(lastword $(MAKEFILE_LIST)))
 
 # LibELI5 uses C++11 features.
-CXXFLAGS+=-std=c++11
+CXXFLAGS+=-std=c++14
 
 # Add directory containing headers. Using C++ code can do:
 #   #incldue <eli5/file.h>
