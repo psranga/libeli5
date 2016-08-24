@@ -20,6 +20,7 @@ using std::cerr;
 using std::cout;
 using std::endl;
 using std::make_pair;
+using std::make_unique;
 using std::map;
 using std::move;
 using std::pair;
