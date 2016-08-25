@@ -27,6 +27,7 @@ using std::pair;
 using std::size_t;
 using std::string;
 using std::tie;
+using std::to_string;
 using std::tuple;
 using std::unique_ptr;
 using std::unordered_map;
