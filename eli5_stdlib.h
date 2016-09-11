@@ -16,6 +16,7 @@
 
 using std::array;
 using std::ceil;
+using std::cerr;
 using std::cout;
 using std::endl;
 using std::make_pair;
