@@ -23,7 +23,7 @@ MAKEHEADER=$(TOPDIR)cpp-makeheader/cpp-makeheader
 #
 # See flags/flags.cc for an example.
 %_test_main : %.cc
-	$(CXX) -o $@ $< $(TOPDIR)diogenes/test_main.cc $(CXXFLAGS)
+	$(CXX) -o $@ $^ $(TOPDIR)diogenes/test_main.cc $(CXXFLAGS)
 
 # Include the ELI5 standard header by default in test binaries. This
 # includes various standard C++ headers, and creates 'using' directives
