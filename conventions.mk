@@ -16,6 +16,10 @@ MAKEHEADER=$(TOPDIR)cpp-makeheader/cpp-makeheader
 %.h : %.cc
 	$(MAKEHEADER) < $< > $@
 
+# Make binary out of a .cc file.
+%_main : %.cc
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS) $(LDLIBS)
+
 # Make a binary using the main() in diomain. Intended for header-only libraries
 # written using ELI5 conventions: put the header stuff and test code into a
 # single .cc file. Use 'cpp-makeheader' to generate the header file. And
