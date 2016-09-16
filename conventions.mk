@@ -33,5 +33,12 @@ MAKEHEADER=$(TOPDIR)cpp-makeheader/cpp-makeheader
 # includes various standard C++ headers, and creates 'using' directives
 # for commons classes like vector, map etc.
 #
-# Using the per-target variable feature of GNU Make.
+# I think eli5_stdlib.h is suitable for being implicitly included in
+# any project. But since libeli5 is a library not a framework, it won't
+# force this decision. A project that wants to implicitly include
+# eli5_stdlib.h can add CXXFLAGS+=-include eli5/eli5_stdlib.h to
+# its Makefile.
+#
+# Use the per-target variable feature of GNU Make to restrict this
+# to test binaries.
 %_test_main: CXXFLAGS+=-include eli5/eli5_stdlib.h
