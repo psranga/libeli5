@@ -6,7 +6,7 @@ CXXFLAGS+=-std=c++14
 
 # Add directory containing headers. Using C++ code can do:
 #   #incldue <eli5/file.h>
-CXXFLAGS+=-I$(TOPDIR)/include
+CXXFLAGS+=-I$(TOPDIR)include
 
 # Utility that generates headers from a C++ source file that follows
 # simple conventions.
