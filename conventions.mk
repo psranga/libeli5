@@ -17,7 +17,7 @@ MAKEHEADER=$(TOPDIR)cpp-makeheader/cpp-makeheader
 	$(MAKEHEADER) < $< > $@
 
 # Make binary out of a .cc file.
-%_main : %.cc
+%_main :
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS) $(LDLIBS)
 
 # Make a binary using the main() in diomain. Intended for header-only libraries
