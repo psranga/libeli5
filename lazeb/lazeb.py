@@ -1,4 +1,4 @@
-"""'match' is a tiny tool inspired by Bazel that makes it easy to build
+"""'Lazeb' is a tiny tool inspired by Bazel that makes it easy to build
 projects that follow libeli5 conventions. It generates a Makefile from a simple
 declarative config file. 'make' is ultimately used to finally build the
 targets.
@@ -11,8 +11,8 @@ before all make commands.
 Syntax
 ------
 
-1. match
-2. match <input BUILD file> <output Make file>
+1. lazeb
+2. lazeb <input BUILD file> <output Make file>
 
 When run without any command-line arguments, will read a file named 'BUILD' from
 the current directory and write output to a file named 'Makefile' in current
@@ -21,7 +21,7 @@ directory.
 Otherwise you need to give two arguments. First one is config filename and
 second one is the output Makefile.
 
-Why match?
+Why Lazeb?
 ----------
 
 We originally started out trying to use make's implicit rules, include files,
@@ -32,7 +32,7 @@ Since one of the goals of libeli5 is that the implementation should also
 be clear, it felt reasonable write preprocessor tool that generates Makefiles.
 
 We adopted a subset of the config file format of Bazel instead of developing
-a new format. It should be pretty simple to convert 'match' config files
+a new format. It should be pretty simple to convert Lazeb config files
 to Bazel.
 
 Why not Bazel itself?
