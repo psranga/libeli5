@@ -28,7 +28,7 @@
 // If you define the same flag in multiple source files, you'll get a link-time
 // error. Make one of them an 'extern'. E.g.,
 //
-//     define_flag<bool> verbosity("verbosity", 0);
+//     extern define_flag<bool> verbosity("verbosity", 0);
 //
 namespace eli5 {
 
