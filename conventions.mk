@@ -26,7 +26,7 @@ MAKEHEADER=$(TOPDIR)cpp-makeheader/cpp-makeheader
 # this _test_main target to run the library's tests.
 #
 # See flags/flags.cc for an example.
-%_test_main : %.cc
+%_test_main :
 	$(CXX) -o $@ $^ $(TOPDIR)diogenes/test_main.cc $(CXXFLAGS) $(LDFLAGS) $(LDLIBS)
 
 # Include the ELI5 standard header by default in test binaries. This
