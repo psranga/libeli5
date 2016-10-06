@@ -25,7 +25,7 @@ Eventually, this is should rewritten using Clang's LibFormat. Maybe. :)
 
 # Core Idea
 
-If all source code is reformatted according to some fixed convention, we can
+If all source code is reformatted according to some fixed convention, we can use
 very simple recognizers and line-by-line scans over the input file to recognize
 most of the program structure needed to generate a header file.
 
@@ -61,7 +61,7 @@ ordering them for writing is trivial: just sort by start position.
 ### Block Start
 
 By reformatting appropriately, many interesting parts of the program can be
-forced to line within a single line, making it possible to recognize them
+forced to lie within a single line, making it possible to recognize them
 analyzing a single line. E.g., function prototypes.
 
 But some like struct definitions won't fall within a single line. The *start*
@@ -77,13 +77,15 @@ of it and add it to list of outputs to be written to the header file.
 
 ### Location Code
 
-Location code is a list of numbers that's essentially a hash of location
-of a byterange in the scope hierarchy of the program. The one location code
-occurs as a prefix in another, the first one is a transitive parent of the
-second.
+Location code is a list of numbers that's essentially a hash of location of a
+byterange in the scope hierarchy of the program with the following property: if
+one location code occurs as a prefix in another, the first one is a transitive
+parent of the second.
 
 This is used to track the byteranges in which 'using' directives should
-be activated.
+be activated. A 'using' declaration should be applied to all byteranges
+whose location code contains the 'using' declaration's location code as
+a prefix.
 
 We keep track of the location code for every line we process, by counting
 brace characters. When rewriting outputs to account for 'using' directives,
