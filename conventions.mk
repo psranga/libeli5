@@ -16,6 +16,13 @@ MAKEHEADER=$(TOPDIR)cpp-makeheader/cpp-makeheader
 %.h : %.cc
 	$(MAKEHEADER) < $< > $@
 
+# Disable the pattern rule that builds a binary out of .o.
+# We use the _main variant below.
+# TODO(ranga): Think about removing the _main suffix for non-test binaries.
+%: %.o
+	@echo "Did you intend to build $@_main instead?" >&2
+	@false
+
 # Make binary out of a .cc file.
 %_main :
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS) $(LDLIBS)
