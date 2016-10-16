@@ -331,11 +331,11 @@ def do_replacements(add_namespace_to_identifiers, inbuf, output, cand_replacemen
 
     s = inbuf[output[0]:output[1]]
     for replacement in replacements:
-      s = s.replace(replacement[0], replacement[1])
+      s = re.sub(r"\b" + replacement[0] + r"\b", replacement[1], s)
 
     t = output[2]
     for replacement in replacements:
-      t = t.replace(replacement[0], replacement[1])
+      t = re.sub(r"\b" + replacement[0] + r"\b", replacement[1], t)
 
     return s + t
   else:
