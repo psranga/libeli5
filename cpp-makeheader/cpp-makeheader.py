@@ -214,12 +214,9 @@ for line in lines:
   if len(line) == 0:
     pass
 
-  # Pass through #include lines.
-  elif line[0:9] == '#include ':
-    outputs.append((line_start_pos, line_end_pos, '', VERBATIM_OUTPUT, line_location_code))
-  
-  # Pass through #define lines.
-  elif line[0:8] == '#define ':
+  # Pass through preprocessor directives.
+  # TODO(ranga): Doesn't handle multiline defines.
+  elif line[0:1] == '#':
     outputs.append((line_start_pos, line_end_pos, '', VERBATIM_OUTPUT, line_location_code))
   
   # Track the mapping between short names and fully-namespaced names.
