@@ -102,14 +102,17 @@ def config(header):
     build.header = header
 
 
-def cc_binary(name, sources=None, output=None):
+def cc_binary(name, sources=None, output=None, data_deps=None):
     if output == None:
         output = name + '_main'
 
     if sources == None:
         sources = [name + '.cc']
 
-    binary = Binary(name=name, sources=sources, output=output, is_test=False)
+    if data_deps == None:
+        data_deps = []
+
+    binary = Binary(name=name, sources=sources, output=output, data_deps=data_deps, is_test=False)
     build.binaries.append(binary)
     return binary
 
@@ -137,6 +140,18 @@ def cc_objfile(name, source=None, outputs=None):
     build.objfiles.append(objfile)
     return objfile
 
+def frag_shader(name, sources=None, output=None):
+    if output == None:
+        output = name + '.out.frag'
+
+    if sources == None:
+        sources = [name + '.frag']
+
+    frag_shader = FragShader(name=name, sources=sources, output=output, is_test=False)
+    build.shaders.append(frag_shader)
+    return frag_shader
+
+
 # ========= Classes to represent a BUILD file in memory. =============
 
 
@@ -150,6 +165,7 @@ class Binary(object):
     name = attr.ib(default='')
     output = attr.ib(default='')
     sources = attr.ib(default=attr.Factory(list))
+    data_deps = attr.ib(default=attr.Factory(list))
     is_test = attr.ib(default=False)
 
 
@@ -172,7 +188,21 @@ class Build(object):
     header = attr.ib(default='')
     binaries = attr.ib(default=attr.Factory(list))
     objfiles = attr.ib(default=attr.Factory(list))
+    shaders = attr.ib(default=attr.Factory(list))
     basedir = attr.ib(default='')
+
+@attr.s
+class FragShader(object):
+    """Representation of a frag_shader rule.
+
+    Conceptually represents an invocation of the C preprocessor.
+
+    """
+    name = attr.ib(default='')
+    output = attr.ib(default='')
+    sources = attr.ib(default=attr.Factory(list))
+    is_test = attr.ib(default=False)
+
 
 # ================= Routines that add implicit cc_objfile BUILD rules =========
 
@@ -200,6 +230,10 @@ def target_providing_filename(build, filename):
     for objfile in build.objfiles:
         if filename in objfile.outputs:
             return objfile
+
+    for shader in build.shaders:
+        if filename == shader.output:
+            return shader
 
     return None
 
@@ -320,6 +354,23 @@ def compute_link_set_for_binary(binary, build):
     return sorted(set(source_dot_o_s + transitive_dot_o_s))
 
 
+def compute_data_deps_for_binary(binary, build):
+    """Figure out all the data files that need to be built to make a binary.
+
+    TODO(ranga): Also include data deps of .o files used by binary.
+    """
+
+    output = []
+
+    for dep_name in binary.data_deps:
+        for shader in build.shaders:
+            if dep_name == shader.name:
+                output.append(shader.output)
+
+    return sorted(set(output))
+
+
+
 # ================= Routines that finally write Makefile rules ===========
 
 def write_objfile_compile_rule(objfile, build, f):
@@ -350,8 +401,14 @@ def write_objfile_compile_rule(objfile, build, f):
 def write_binary_link_rule(binary, build, f):
     root_exts = [os.path.splitext(source) for source in binary.sources]
     linkset = compute_link_set_for_binary(binary, build)
+    data_deps = compute_data_deps_for_binary(binary, build)
     f.write(binary.output + ': ')
     f.write(' '.join(linkset))
+    f.write('\n')
+
+    # TODO(ranga): Find a way to integrate into binary target.
+    f.write(binary.output + '_data : ')
+    f.write(' '.join(data_deps))
     f.write('\n')
 
     # write the rules for the objfiles the binary depends on.
@@ -362,6 +419,16 @@ def write_binary_link_rule(binary, build, f):
         write_objfile_compile_rule(objfile, build, f)
 
 
+def write_shader_gen_rule(shader, build, f):
+    root_exts = [os.path.splitext(source) for source in shader.sources]
+    # TODO(ranga): Handle shader that includes generated shaders.
+    #linkset = compute_link_set_for_binary(binary, build)
+    linkset = shader.sources
+    f.write(shader.output + ': ')
+    f.write(' '.join(linkset))
+    f.write('\n')
+
+
 def write_clean(build, f):
     rm_list = []
     for binary in build.binaries:
@@ -370,6 +437,9 @@ def write_clean(build, f):
     for objfile in build.objfiles:
         for output in objfile.outputs:
             rm_list.append(output)
+
+    for shader in build.shaders:
+        rm_list.append(shader.output)
 
     f.write('clean:\n')
     f.write('\trm -f ' + ' '.join(rm_list))
@@ -389,11 +459,14 @@ def write_makefile(build, f):
 
     # Write an all target that builds all binaries.
     f.write('all: ')
-    f.write(' '.join([binary.output for binary in build.binaries]))
+    f.write(' '.join([binary.output for binary in build.binaries] + [shader.output for shader in build.shaders]))
     f.write('\n')
 
     for binary in build.binaries:
         write_binary_link_rule(binary, build, f)
+
+    for shader in build.shaders:
+        write_shader_gen_rule(shader, build, f)
 
     write_clean(build, f)
 
@@ -416,7 +489,7 @@ if len(sys.argv) == 3:
 
 build.basedir = os.path.dirname(build_filename)
 
-run_context = {'build': build, 'cc_binary': cc_binary,
+run_context = {'build': build, 'cc_binary': cc_binary, 'frag_shader': frag_shader,
                'cc_test': cc_test, 'cc_objfile': cc_objfile, 'config': config}
 execfile(build_filename, run_context)
 

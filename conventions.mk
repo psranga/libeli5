@@ -49,3 +49,7 @@ MAKEHEADER=$(TOPDIR)cpp-makeheader/cpp-makeheader
 # Use the per-target variable feature of GNU Make to restrict this
 # to test binaries.
 %_test_main: CXXFLAGS+=-include eli5/eli5_stdlib.h
+
+# Make fragment shader out of included fragment shaders.
+%.out.frag :
+	(echo '#version 330 core'; cpp $^  | grep -v '^# ') > $@
