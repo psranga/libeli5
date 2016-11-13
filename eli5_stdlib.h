@@ -25,6 +25,7 @@ using std::make_unique;
 using std::map;
 using std::move;
 using std::pair;
+using namespace std::placeholders;
 using std::set;
 using std::size_t;
 using std::string;

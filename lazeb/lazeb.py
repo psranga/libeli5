@@ -73,6 +73,13 @@ Example
     # foo.cc.
     cc_binary(name="foo")
 
+    # all_shaders.frag #includes a bunch of files.
+    frag_shader(name="all_shaders")
+
+    # Can specify data dependencies.
+    # Creates two Make targets bar_main and bar_data that builds all_shaders.
+    cc_binary(name="bar", data_deps=["all_shaders"])
+
     # Make a binary named scratch_test_main out of scratch.cc
     # and files it includes. Will use the main() supplied by
     # Diogenes testing framework.
