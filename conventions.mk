@@ -52,4 +52,4 @@ MAKEHEADER=$(TOPDIR)cpp-makeheader/cpp-makeheader
 
 # Make fragment shader out of included fragment shaders.
 %.out.frag :
-	(echo '#version 330 core'; cpp $^  | grep -v '^# ') > $@
+	(echo '#version 330 core'; cpp $<  | grep -v '^# ') > $@

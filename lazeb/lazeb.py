@@ -432,7 +432,7 @@ def write_shader_gen_rule(shader, build, f):
     #linkset = compute_link_set_for_binary(binary, build)
     linkset = shader.sources
     f.write(shader.output + ': ')
-    f.write(' '.join(linkset))
+    f.write("""$(shell cpp -MM omnibus.frag | sed -e 's/\\\\//g' | tr -d '\\n' | sed -e 's/^.*: //g')""");
     f.write('\n')
 
 
