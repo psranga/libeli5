@@ -43,9 +43,4 @@ using std::vector;
 using eli5::define_flag;
 #endif
 
-#if !defined(DONT_INCLUDE_LOGGING)
-extern define_flag<bool> vlog_level;
-#include "eli5/logging.h"
-#endif
-
 #endif
