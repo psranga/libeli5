@@ -11,7 +11,9 @@
 // Log to cout if command-line flag vlog_level is >= 3.
 // VLOG(3) << "abcd" << ':' << ' ' << 1234;
 
-constexpr int INFO = 0;
+constexpr int ERROR = 0;
+constexpr int WARNING = 1;
+constexpr int INFO = 2;
 
 // RAII to automatically add a newline at the end of a log command like
 //   LOG(INFO) << "abcd" << "1234";
@@ -54,8 +56,8 @@ static DioTest Test_LOG_INFO = []() {
   LOG(INFO) << "Hello world 2";
 };
 
-//extern define_flag<bool> vlog_level("vlog_level", 0);
-define_flag<bool> vlog_level("vlog_level", 0);
+// Log everything at INFO and below.
+define_flag<bool> vlog_level("vlog_level", 2);
 
 // Adds newlines. Also ignores stream op. if logging level is too low.
 // Worth jumping through the hoops here so vlog statements that are expensive

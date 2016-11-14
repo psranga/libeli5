@@ -1,7 +1,11 @@
-#ifndef MH2d981ef5aa03b654fb0683bab17a7ba7be113677
-#define MH2d981ef5aa03b654fb0683bab17a7ba7be113677
+#ifndef MH312130ecb05661b3657063cde4152eb2b43527b8
+#define MH312130ecb05661b3657063cde4152eb2b43527b8
 
-constexpr int INFO = 0;
+constexpr int ERROR = 0;
+
+constexpr int WARNING = 1;
+
+constexpr int INFO = 2;
 
 // RAII to automatically add a newline at the end of a log command like
 //   LOG(INFO) << "abcd" << "1234";
