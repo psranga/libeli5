@@ -254,8 +254,8 @@ for line in lines:
   elif (line[0:10] == 'namespace ') and (line[-1] == '{'):
     block_starts.append((line_start_pos, line_end_pos, '', IS_NAMED_NAMESPACE, line_location_code))
 
-  # Pass through typedefs.
-  elif (line[0:8] == 'typedef '):
+  # Pass through typedefs and constexprs.
+  elif (line[0:8] == 'typedef ') or (line[0:10] == 'constexpr '):
     outputs.append((line_start_pos, line_end_pos, '', ADD_NAMESPACE_TO_IDENTIFIERS, line_location_code))
 
   # Pass through function prototype lines. A line that:
