@@ -1,5 +1,5 @@
-#ifndef MHdd3f2f151413a6f3abe6897293496666797699ed
-#define MHdd3f2f151413a6f3abe6897293496666797699ed
+#ifndef MH0f975449b92f3fec680c6d97fe8fb3b412941ce3
+#define MH0f975449b92f3fec680c6d97fe8fb3b412941ce3
 
 #include <sstream>
 
@@ -43,14 +43,14 @@ struct VlogNewLineAdder {
 
   // Forward all stream output operations to the real stream.
   template <typename T>
-  std::ostream& operator<<(const T& t) {
+  VlogNewLineAdder& operator<<(const T& t) {
     if (AmIActive()) {
-      return (real_stream << t);
+      real_stream << t;
     } else {
       // Don't do the logging operation. This is very efficient since any
       // expensive operations to convert t to string form will be bypassed.
-      return real_stream;
     }
+    return *this;
   }
 
   VlogNewLineAdder(std::ostream& stream, int _level, const char* filename,

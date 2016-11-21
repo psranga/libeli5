@@ -100,14 +100,14 @@ struct VlogNewLineAdder {
 
   // Forward all stream output operations to the real stream.
   template <typename T>
-  std::ostream& operator<<(const T& t) {
+  VlogNewLineAdder& operator<<(const T& t) {
     if (AmIActive()) {
-      return (real_stream << t);
+      real_stream << t;
     } else {
       // Don't do the logging operation. This is very efficient since any
       // expensive operations to convert t to string form will be bypassed.
-      return real_stream;
     }
+    return *this;
   }
 
   VlogNewLineAdder(std::ostream &stream, int _level, const char *filename, int line)
