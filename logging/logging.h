@@ -1,11 +1,15 @@
-#ifndef MH312130ecb05661b3657063cde4152eb2b43527b8
-#define MH312130ecb05661b3657063cde4152eb2b43527b8
+#ifndef MHdd3f2f151413a6f3abe6897293496666797699ed
+#define MHdd3f2f151413a6f3abe6897293496666797699ed
+
+#include <sstream>
 
 constexpr int ERROR = 0;
 
 constexpr int WARNING = 1;
 
 constexpr int INFO = 2;
+
+constexpr int MEMORY = 3;
 
 // RAII to automatically add a newline at the end of a log command like
 //   LOG(INFO) << "abcd" << "1234";
@@ -66,6 +70,10 @@ struct VlogNewLineAdder {
 };
 VlogNewLineAdder GetVlogLogger(int level, const char* filename, int line_num);
 
+VlogNewLineAdder GetMlogLogger(int level, const char* filename, int line_num);
+
 #define VLOG(level) (GetVlogLogger((level), __FILE__, __LINE__))
+
+#define MLOG(level) (GetMlogLogger((level), __FILE__, __LINE__))
 
 #endif
