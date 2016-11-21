@@ -122,7 +122,7 @@ struct define_flag : basic_flag {
 };
 
 // Call this at the start of main.
-inline void InitializeFlags(int argc, const char* argv[]) {
+inline void InitializeFlags(int argc, char** argv) {
   for (int i = 1; i < argc; ++i) {
     string cmdparam(argv[i]);
 

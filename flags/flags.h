@@ -1,5 +1,5 @@
-#ifndef MH98159821246739290431362639570744690946
-#define MH98159821246739290431362639570744690946
+#ifndef MH73ca96d27a4749457337c0b8805b8e1ce5423ff6
+#define MH73ca96d27a4749457337c0b8805b8e1ce5423ff6
 
 // Eli5 command-line flags module.
 //
@@ -31,7 +31,7 @@
 // If you define the same flag in multiple source files, you'll get a link-time
 // error. Make one of them an 'extern'. E.g.,
 //
-//     define_flag<bool> verbosity("verbosity", 0);
+//     extern define_flag<bool> verbosity("verbosity", 0);
 //
 namespace eli5 {
 
@@ -111,7 +111,7 @@ struct define_flag : basic_flag {
 };
 
 // Call this at the start of main.
-inline void InitializeFlags(int argc, const char* argv[]) {
+inline void InitializeFlags(int argc, char** argv) {
   for (int i = 1; i < argc; ++i) {
     string cmdparam(argv[i]);
 
