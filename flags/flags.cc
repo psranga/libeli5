@@ -77,6 +77,7 @@ struct FlagParser {
 template <>
 struct FlagParser<bool> {
   bool operator()(const string &s) {
+    assert((s == "1") || (s == "true") || (s == "0") || (s == "false"));
     return (s == "1") || (s == "true");
   }
 };

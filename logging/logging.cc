@@ -83,7 +83,7 @@ static DioTest Test_LOG_MEMORY = []() {
 };
 
 // Log everything at INFO and below.
-define_flag<bool> vlog_level("vlog_level", 2);
+define_flag<int> vlog_level("vlog_level", 2);
 
 // Adds newlines. Also ignores stream op. if logging level is too low.
 // Worth jumping through the hoops here so vlog statements that are expensive

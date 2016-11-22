@@ -1,5 +1,5 @@
-#ifndef MH73ca96d27a4749457337c0b8805b8e1ce5423ff6
-#define MH73ca96d27a4749457337c0b8805b8e1ce5423ff6
+#ifndef MHff9d8c25b2fbc9bf653382090f954689803ff304
+#define MHff9d8c25b2fbc9bf653382090f954689803ff304
 
 // Eli5 command-line flags module.
 //
@@ -75,7 +75,10 @@ struct FlagParser {
 };
 template <>
 struct FlagParser<bool> {
-  bool operator()(const string& s) { return (s == "1") || (s == "true"); }
+  bool operator()(const string& s) {
+    assert((s == "1") || (s == "true") || (s == "0") || (s == "false"));
+    return (s == "1") || (s == "true");
+  }
 };
 template <>
 struct FlagParser<int> {
