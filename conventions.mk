@@ -2,7 +2,7 @@
 TOPDIR := $(dir $(lastword $(MAKEFILE_LIST)))
 
 # LibELI5 uses C++11 features.
-CXXFLAGS+=-std=c++14
+CXXFLAGS+=-std=c++14 -Wall -Wno-sign-compare
 
 # Link in logging library by default.
 LDFLAGS+=-L$(TOPDIR)lib
