@@ -4,6 +4,16 @@ TOPDIR := $(dir $(lastword $(MAKEFILE_LIST)))
 # LibELI5 uses C++11 features.
 CXXFLAGS+=-std=c++14
 
+# Link in logging library by default.
+LDFLAGS+=-L$(TOPDIR)lib
+
+# Need this if-then-else because the logging 'Makefile' includes this, and we
+# dont want to link in the logging lib when making test binaries in that dir.
+ifeq ($(DONT_LINK_LOGGING),1)
+else
+LDLIBS+=-leli5_logging
+endif
+
 # Add directory containing headers. Using C++ code can do:
 #   #incldue <eli5/file.h>
 CXXFLAGS+=-I$(TOPDIR)include

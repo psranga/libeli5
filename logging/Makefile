@@ -1,3 +1,4 @@
+DONT_LINK_LOGGING=1
 include ../conventions.mk
 
 all: logging.h logging_test_main libeli5_logging.a
