@@ -138,10 +138,12 @@ VlogNewLineAdder GetMlogLogger(int level, const char* filename, int line_num) {
 #define MLOG(level) (GetMlogLogger((level), __FILE__, __LINE__))
 
 static DioTest Test_Vlog = []() {
+  int prev_level = vlog_level.get_flag();
   InMemoryLogger(1);  // Clear log.
   MLOG(0) << "Hello vlog0.";
   MLOG(1) << "Hello vlog1.";
   MLOG(0) << "Hello vlog00.";
   vlog_level.set_flag(1);
   MLOG(1) << "Hello vlog11.";
+  vlog_level.set_flag(prev_level);
 };
