@@ -139,12 +139,12 @@ class DioTest {
   }
 
   // run_spec is like: "test_name1,test_name2,filename.cc,..."
-  static bool ShouldRunTest(DioTest* t, const string& run_spec) {
+  static bool ShouldRunTest(DioTest* t, const std::string& run_spec) {
     if ((t->filename == nullptr) || (t->test_name == nullptr)) {
       return false;
     }
-    return (run_spec.find(t->filename) != string::npos) ||
-           (run_spec.find(t->test_name) != string::npos);
+    return (run_spec.find(t->filename) != std::string::npos) ||
+           (run_spec.find(t->test_name) != std::string::npos);
   }
 
   // Runs all tests. If run_spec is not null, runs the subset specified by that
@@ -152,11 +152,35 @@ class DioTest {
   static void RunAll(const std::string& run_spec = "") {
     for (DioTest* f : AllTests()) {
       if (run_spec.empty() || ShouldRunTest(f, run_spec)) {
+#if !defined(DONT_INCLUDE_LOGGING)
+        if (f->filename) {
+          LOG(INFO) << "Running test: " << f->test_name << " at " << f->filename
+                    << ":" << f->linenum;
+        }
+#endif
         f->Setup();
         RecordExpectStatusOrPrintResults(false /* ignored */,
                                          2 /* increment number of test run */);
+        int num_failed_expects_before =
+            RecordExpectStatusOrPrintResults(false /* ignored */, 3);
         f->Run();
+        int num_failed_expects_after =
+            RecordExpectStatusOrPrintResults(false /* ignored */, 3);
+        std::cout << "num_failed_expects_before: " << num_failed_expects_before
+                  << " num_failed_expects_after: " << num_failed_expects_after
+                  << std::endl;
         f->Teardown();
+        if (num_failed_expects_after > num_failed_expects_before) {
+          RecordExpectStatusOrPrintResults(false /* ignored */,
+                                           4 /* record name of failing test*/,
+                                           f->test_name);
+        }
+#if !defined(DONT_INCLUDE_LOGGING)
+        if (f->filename) {
+          LOG(INFO) << "Finished test: " << f->test_name << " at " << f->filename
+                    << ":" << f->linenum;
+        }
+#endif
       }
     }
     RecordExpectStatusOrPrintResults(false /* ignored */,
@@ -166,10 +190,13 @@ class DioTest {
   // If 'record' is true, keeps track of the number of failing and
   // passing tests. If 'record' is false, print a report to
   // stdout saying how many passed and failed.
-  static void RecordExpectStatusOrPrintResults(bool value, int op) {
+  static int RecordExpectStatusOrPrintResults(bool value, int op,
+                                               const std::string& test_name = "") {
     static int num_tests_run = 0;
     static int passed = 0;
     static int failed = 0;
+    static std::vector<std::string> failed_test_names;
+
     if (op == 1) {
       if (value) {
         ++passed;
@@ -178,12 +205,30 @@ class DioTest {
       }
     } else if (op == 2) {
       ++num_tests_run;
+    } else if (op == 3) {
+      return failed;
+    } else if (op == 4) {
+      failed_test_names.push_back(test_name);
+      std::cout << "new failed_test_names.size: " << failed_test_names.size()
+                << std::endl;
     } else if (op == 0) {
-      std::cout << "Diogenes results: Ran " << num_tests_run << " tests. " << passed << "/"
-                << (passed + failed) << " expects passed (" << failed
-                << " failed)." << std::endl;
+      std::cout << "Diogenes results: Ran " << num_tests_run
+                << " tests. Num failed tests: " << failed_test_names.size()
+                << " and " << passed << "/" << (passed + failed)
+                << " expects passed (" << failed << " failed)." << std::endl;
+      if (!failed_test_names.empty()) {
+        std::cout << "Failed tests: ";
+        for (int i = 0; i < failed_test_names.size(); ++i) {
+          if (i > 0) {
+            std::cout << ",";
+          }
+          std::cout << failed_test_names[i];
+        }
+        std::cout << std::endl;
+      }
       assert(failed == 0);
     }
+    return -1;
   }
 
   // Prefer the macro DioExpect below.

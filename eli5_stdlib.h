@@ -43,14 +43,14 @@ using std::vector;
 using eli5::define_flag;
 #endif
 
-#if !defined(DONT_INCLUDE_FLAGS)
-extern define_flag<string> diofilter;
-#endif
-#include "eli5/diogenes.h"
-
 #if !defined(DONT_INCLUDE_LOGGING)
 extern define_flag<int> vlog_level;
 #include "eli5/logging.h"
 #endif
+
+#if !defined(DONT_INCLUDE_FLAGS)
+extern define_flag<string> diofilter;
+#endif
+#include "eli5/diogenes.h"
 
 #endif
