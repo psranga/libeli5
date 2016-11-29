@@ -46,7 +46,7 @@ struct basic_flag {
   string name;
 
   // Sets the flag by parsing the given string.
-  virtual void set_flag(const string& s) = 0;
+  virtual void set_flag_from_string(const string &s) = 0;
 
   // Workaround for C++ verbosity to keep things header-only. Wrap the static
   // registry in a static member function. If we made this a class-level
@@ -89,6 +89,13 @@ struct FlagParser<int> {
   }
 };
 
+template <>
+struct FlagParser<string> {
+  string operator()(const string &s) {
+    return s;
+  }
+};
+
 template <typename ValueType, typename FlagParserType = FlagParser<ValueType>>
 struct define_flag : basic_flag {
   ValueType value;
@@ -101,7 +108,7 @@ struct define_flag : basic_flag {
     return get_flag();
   }
 
-  void set_flag(const string& s) override {
+  void set_flag_from_string(const string& s) override {
     FlagParserType parser{};
     set_flag(static_cast<const ValueType &>(parser(s)));
   }
@@ -162,7 +169,7 @@ inline void InitializeFlags(int argc, char** argv) {
 
     for (auto* flag : basic_flag::get_flags_registry()) {
       if (flag_name == flag->name) {
-        flag->set_flag(flag_value);
+        flag->set_flag_from_string(flag_value);
       }
     }
   }
@@ -218,9 +225,9 @@ static FlagTest Test_SetViaAssign = []() {
 };
 
 static FlagTest Test_Initialize = []() {
-
-  const char* argv[] = { "/bin/bash",
-    "--dump_shaders=true" };
+  char arg0[] = "/bin/bash";
+  char arg1[] = "--dump_shaders=true";
+  char* argv[] = {arg0, arg1};
   eli5::define_flag<bool> dump_shaders("dump_shaders", false);
 
   cout << "dump_shaders: " << dump_shaders.get_flag() << endl;
@@ -228,6 +235,17 @@ static FlagTest Test_Initialize = []() {
 
   cout << "dump_shaders: " << dump_shaders.get_flag() << endl;
   DioExpect(dump_shaders);
+};
+
+static FlagTest Test_StringFlag = []() {
+  eli5::define_flag<string> filename("filename", "/dev/null");
+  string s = filename.get_flag();
+  cout << "s: " << s << endl;
+  DioExpect(s == "/dev/null");
+
+  filename.set_flag("/dev/console");
+  cout << "s: " << filename.get_flag() << endl;
+  DioExpect(filename.get_flag() == "/dev/console");
 };
 
 }

@@ -38,12 +38,15 @@ using std::unique_ptr;
 using std::unordered_map;
 using std::vector;
 
-#include "eli5/diogenes.h"
-
 #if !defined(DONT_INCLUDE_FLAGS)
 #include "eli5/flags.h"
 using eli5::define_flag;
 #endif
+
+#if !defined(DONT_INCLUDE_FLAGS)
+extern define_flag<string> diofilter;
+#endif
+#include "eli5/diogenes.h"
 
 #if !defined(DONT_INCLUDE_LOGGING)
 extern define_flag<int> vlog_level;

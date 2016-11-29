@@ -246,7 +246,7 @@ for line in lines:
 
   # Note down where anonymous namespaces start. In another pass,
   # we'll extract the full extent and ignore definitions within.
-  elif (line == 'namespace {'):
+  elif (line == 'namespace {') or line.startswith('DIONAMESPACE'):
     block_starts.append((line_start_pos, line_end_pos, '', IS_ANONYMOUS_NAMESPACE, line_location_code))
 
   # Note down where named namespaces start. In another pass,
@@ -266,7 +266,8 @@ for line in lines:
   elif ((line[0:7] != 'struct ') and (line[0:6] != 'class') and (line[0:9] != 'namespace') and
         (line[0] != ' ') and
         ((line.find('::') == -1) or (line.find('::') > line.find('('))) and
-        (line.find('DioTest') == -1) and (line[-1] == '{')):
+        (line.find('DioTest') == -1) and (line.find('DIOTEST') == -1) and
+        (line[-1] == '{')):
     outputs.append((line_start_pos, line_end_pos-2, ';\n',
                     ADD_NAMESPACE_TO_IDENTIFIERS | ADD_SEMICOLON | REMOVE_BRACE, line_location_code))
 

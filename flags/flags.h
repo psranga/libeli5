@@ -1,5 +1,5 @@
-#ifndef MHff9d8c25b2fbc9bf653382090f954689803ff304
-#define MHff9d8c25b2fbc9bf653382090f954689803ff304
+#ifndef MHaffb3657d3ec844edd4e26909f54a0bfe0d8412c
+#define MHaffb3657d3ec844edd4e26909f54a0bfe0d8412c
 
 // Eli5 command-line flags module.
 //
@@ -49,7 +49,7 @@ struct basic_flag {
   string name;
 
   // Sets the flag by parsing the given string.
-  virtual void set_flag(const string& s) = 0;
+  virtual void set_flag_from_string(const string& s) = 0;
 
   // Workaround for C++ verbosity to keep things header-only. Wrap the static
   // registry in a static member function. If we made this a class-level
@@ -84,6 +84,10 @@ template <>
 struct FlagParser<int> {
   int operator()(const string& s) { return std::stoi(s); }
 };
+template <>
+struct FlagParser<string> {
+  string operator()(const string& s) { return s; }
+};
 template <typename ValueType, typename FlagParserType = FlagParser<ValueType>>
 struct define_flag : basic_flag {
   ValueType value;
@@ -96,7 +100,7 @@ struct define_flag : basic_flag {
     return get_flag();
   }
 
-  void set_flag(const string& s) override {
+  void set_flag_from_string(const string& s) override {
     FlagParserType parser{};
     set_flag(static_cast<const ValueType&>(parser(s)));
   }
@@ -153,7 +157,7 @@ inline void InitializeFlags(int argc, char** argv) {
 
     for (auto* flag : basic_flag::get_flags_registry()) {
       if (flag_name == flag->name) {
-        flag->set_flag(flag_value);
+        flag->set_flag_from_string(flag_value);
       }
     }
   }

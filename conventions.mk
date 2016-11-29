@@ -6,6 +6,7 @@ CXXFLAGS+=-std=c++14 -Wall -Wno-sign-compare
 
 # Link in logging library by default.
 LDFLAGS+=-L$(TOPDIR)lib
+LDFLAGS+=-Wl,-rpath,$(TOPDIR)lib
 
 # Need this if-then-else because the logging 'Makefile' includes this, and we
 # dont want to link in the logging lib when making test binaries in that dir.

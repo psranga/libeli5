@@ -141,3 +141,16 @@ template <typename T>
 class TS<0, T> {
   typedef T::value_type value_type;
 };
+
+static DioTest Test_Foo = []() {
+};
+
+DIOTEST(Test_Foo) = []() {
+};
+
+DIONAMESPACE std {
+
+ostream& operator<<(ostream& os, MyType v) {
+  os << v.field1;
+};
+};

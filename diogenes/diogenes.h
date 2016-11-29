@@ -54,6 +54,19 @@
 //     DioGetSnapshottedValue<int>("on_exit") << endl;
 // };
 //
+// // Register with filename, line number, and test name for
+// // running a subset of tests.
+// DIOTEST(Test_ClearInt2) = []() {
+//   // Set up inputs.
+//   int i = 12;
+//
+//   // Call the function being tested.
+//   ClearValue(i);
+//
+//   // Check that the function worked.
+//   DioExpect(i == 0);
+// };
+//
 // int main() {
 //   // Call this somewhere to run all tests in all files.
 //   Diogenes::RunAll();
@@ -80,6 +93,9 @@ class DioTest {
 
   // A single test.
   Test t;
+  const char* filename = nullptr;
+  int linenum = -1;
+  const char* test_name = nullptr;
 
   // Makes a test out of any void lambda, and adds it to all tests.
   // This is the core idea of Diogenes.
@@ -89,9 +105,24 @@ class DioTest {
     AllTests().push_back(this);
   }
 
+  // Makes test with filename, line number and name of test also specified.
+  // The macro DIOTEST will probably be more convenient.
+  template <class Lambda>
+  DioTest(const char *_filename, int _linenum, const char *_test_name, Lambda l)
+      : t(l), filename(_filename), linenum(_linenum), test_name(_test_name) {
+    AllTests().push_back(this);
+  }
+
+  // Create shell of a test with only filename, line number, and name of test set.
+  // For use with DIOTEST macro below.
+  DioTest(const char *_filename, int _linenum, const char *_test_name)
+      : filename(_filename), linenum(_linenum), test_name(_test_name) {
+    AllTests().push_back(this);
+  }
+
   // Runs this test. Test passes if none of the calls it makes to DioExpect
   // indicate failure. If it makes no calls, that means the test passes.
-  void Run() const { t(); }
+  virtual void Run() const { t(); }
 
   // Called before test runs.
   virtual void Setup() {};
@@ -107,44 +138,104 @@ class DioTest {
     return tests;
   }
 
-  // Runs all tests.
-  static void RunAll() {
+  static bool ShouldRunTest(DioTest* t, const std::string& run_spec) {
+    if (t->filename == nullptr) {
+      return false;
+    }
+    return run_spec == t->filename;
+  }
+
+  // Runs all tests. If run_spec is not null, runs the subset specified by that
+  // spec.
+  static void RunAll(const std::string& run_spec = "") {
     for (DioTest* f : AllTests()) {
-      f->Setup();
-      f->Run();
-      f->Teardown();
+      if (run_spec.empty() || ShouldRunTest(f, run_spec)) {
+        f->Setup();
+        RecordExpectStatusOrPrintResults(false /* ignored */,
+                                         2 /* increment number of test run */);
+        f->Run();
+        f->Teardown();
+      }
     }
     RecordExpectStatusOrPrintResults(false /* ignored */,
-                                     false /* print status */);
+                                     0 /* print status */);
   }
 
   // If 'record' is true, keeps track of the number of failing and
   // passing tests. If 'record' is false, print a report to
   // stdout saying how many passed and failed.
-  static void RecordExpectStatusOrPrintResults(bool value, bool record) {
+  static void RecordExpectStatusOrPrintResults(bool value, int op) {
+    static int num_tests_run = 0;
     static int passed = 0;
     static int failed = 0;
-    if (record) {
+    if (op == 1) {
       if (value) {
         ++passed;
       } else {
         ++failed;
       }
-    } else {
-      std::cout << "Diogenes results: " << passed << "/" << (passed + failed)
-                << " expects passed (" << failed << " failed)." << std::endl;
+    } else if (op == 2) {
+      ++num_tests_run;
+    } else if (op == 0) {
+      std::cout << "Diogenes results: Ran " << num_tests_run << " tests. " << passed << "/"
+                << (passed + failed) << " expects passed (" << failed
+                << " failed)." << std::endl;
       assert(failed == 0);
     }
   }
 
   // Prefer the macro DioExpect below.
   static void DioExpect2(const std::string& expression_str, bool value) {
-    RecordExpectStatusOrPrintResults(value, true /* record */);
+    RecordExpectStatusOrPrintResults(value, 1 /* record */);
     if (!value) {
       std::cerr << "Failed test: '" << expression_str << "'" << std::endl;
     }
   }
 };
+
+// I'm not happy about this macro, since it's not very ELI5. But running
+// a subset of tests is an important capability. So I'm reluctantly
+// adding this macro so support that feature.
+//
+// Macro to register a test with filename, line number, and name info.
+// Usage:
+//
+//   DIOTEST(Test_Foo) = []() {
+//   };
+//
+// Almost same syntax as the unnamed test syntax: you assign a lambda to
+// something. Under the hood, a unique class named after the test gets
+// created. A *static* variable of type lambda is declared within the class.
+// Finally, the first part of the code to set the static variable is emitted.
+//
+// Expands to something like:
+//
+// struct Test_Foo_Class : public DioTest {
+//   static DioTest::Test l;
+//   Test_Foo_Class(filename, linenum, name) : DioTest(filename, linenum, name) {};
+// };
+// Test_Foo_Class::l /* your lambda definition gets assigned to this variable */
+#define DIOTEST(test_name) \
+struct test_name##_Class : public DioTest { \
+  static DioTest::Test l; \
+  void Run() const override { \
+    l(); \
+  } \
+  test_name##_Class(const char *filename, int linenum, const char *test_name) \
+      : DioTest(filename, linenum, test_name){}; \
+}; \
+\
+static test_name##_Class test_name(__FILE__, __LINE__, #test_name); \
+DioTest::Test test_name##_Class::l \
+
+// Macro to textually mark namespaces that are used only for testing and that
+// can be removed if building a binary that lacks debug code. cpp-makeheader
+// uses this to avoid writing declaraions for functions etc in namespaces
+// declared using this macro.
+//
+// Needed because some parts of the standard library require functions defined
+// in std namespace. E.g., operator<< for custom types.
+#define DIONAMESPACE namespace
 
 // Syntax sugar: Allow Diogenes::RunAll() to run all tests.
 typedef DioTest Diogenes;
