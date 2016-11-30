@@ -138,11 +138,13 @@ class DioTest {
     return tests;
   }
 
-  static bool ShouldRunTest(DioTest* t, const std::string& run_spec) {
-    if (t->filename == nullptr) {
+  // run_spec is like: "test_name1,test_name2,filename.cc,..."
+  static bool ShouldRunTest(DioTest* t, const string& run_spec) {
+    if ((t->filename == nullptr) || (t->test_name == nullptr)) {
       return false;
     }
-    return run_spec == t->filename;
+    return (run_spec.find(t->filename) != string::npos) ||
+           (run_spec.find(t->test_name) != string::npos);
   }
 
   // Runs all tests. If run_spec is not null, runs the subset specified by that
