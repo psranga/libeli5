@@ -1,5 +1,5 @@
-#ifndef MHaffb3657d3ec844edd4e26909f54a0bfe0d8412c
-#define MHaffb3657d3ec844edd4e26909f54a0bfe0d8412c
+#ifndef MH62b0b5733fade79610f0881342cc655459250373
+#define MH62b0b5733fade79610f0881342cc655459250373
 
 // Eli5 command-line flags module.
 //
@@ -83,6 +83,14 @@ struct FlagParser<bool> {
 template <>
 struct FlagParser<int> {
   int operator()(const string& s) { return std::stoi(s); }
+};
+template <>
+struct FlagParser<float> {
+  int operator()(const string& s) { return std::stof(s); }
+};
+template <>
+struct FlagParser<double> {
+  int operator()(const string& s) { return std::stod(s); }
 };
 template <>
 struct FlagParser<string> {

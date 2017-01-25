@@ -90,6 +90,20 @@ struct FlagParser<int> {
 };
 
 template <>
+struct FlagParser<float> {
+  int operator()(const string &s) {
+    return std::stof(s);
+  }
+};
+
+template <>
+struct FlagParser<double> {
+  int operator()(const string &s) {
+    return std::stod(s);
+  }
+};
+
+template <>
 struct FlagParser<string> {
   string operator()(const string &s) {
     return s;
@@ -246,6 +260,28 @@ static FlagTest Test_StringFlag = []() {
   filename.set_flag("/dev/console");
   cout << "s: " << filename.get_flag() << endl;
   DioExpect(filename.get_flag() == "/dev/console");
+};
+
+static FlagTest Test_FloatFlag = []() {
+  eli5::define_flag<float> flag_fps("fps", 23.125f);
+  float fps = flag_fps;
+  cout << "fps: " << fps << endl;
+  DioExpect(fps == 23.125f);
+
+  flag_fps.set_flag(24.25f);
+  cout << "new fps: " << flag_fps.get_flag() << endl;
+  DioExpect(flag_fps.get_flag() == 24.25f);
+};
+
+static FlagTest Test_DoubleFlag = []() {
+  eli5::define_flag<double> flag_fps("fps", 23.125);
+  double fps = flag_fps;
+  cout << "fps: " << fps << endl;
+  DioExpect(fps == 23.125);
+
+  flag_fps.set_flag(24.25);
+  cout << "new fps: " << flag_fps.get_flag() << endl;
+  DioExpect(flag_fps.get_flag() == 24.25);
 };
 
 }
