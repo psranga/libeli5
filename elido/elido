@@ -338,4 +338,7 @@ if __name__ == '__main__':
             cmd_queue.put(worker_input)
             chunked_input = []
 
-    cmd_queue.join()
+    try:
+        cmd_queue.join()
+    except KeyboardInterrupt:
+        sys.exit(2)
