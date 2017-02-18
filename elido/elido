@@ -317,21 +317,19 @@ def exec_worker():
         logging.debug('cmd: ' + str(cmd) +
                       ' fd_filenames: ' + str(fd_filenames) +
                       ' output_filenames: ' + str(output_filenames))
-        if not args.dry_run:
-            open_ok, fds_to_use = compute_fds_to_use(fd_filenames)
-            if open_ok:
-                try:
-                    map(create_intermediate_dirs, output_filenames)
-                except:
-                    close_fds_if_needed(fds_to_use, fd_filenames)
-                else:
-                    subprocess.call(cmd, stdin=fds_to_use[0], stdout=fds_to_use[
-                                    1], stderr=fds_to_use[2], shell=False)
-                    close_fds_if_needed(fds_to_use, fd_filenames)
+
+        open_ok, fds_to_use = compute_fds_to_use(fd_filenames)
+        if open_ok:
+            try:
+                map(create_intermediate_dirs, output_filenames)
+            except:
+                close_fds_if_needed(fds_to_use, fd_filenames)
             else:
-                logging.error('Error computing fds: ' + str(worker_input))
+                subprocess.call(cmd, stdin=fds_to_use[0], stdout=fds_to_use[
+                                1], stderr=fds_to_use[2], shell=False)
+                close_fds_if_needed(fds_to_use, fd_filenames)
         else:
-            logging.warning('ignored: ' + str(cmd))
+            logging.error('Error computing fds: ' + str(worker_input))
 
         cmd_queue.task_done()
 
