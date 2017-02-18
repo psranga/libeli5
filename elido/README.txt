@@ -33,15 +33,28 @@ specification of the command to be run for each value in the input.
 If the command you're trying to run itself starts with '--' (!!!), then add the
 argument '--' before the command starts.
 
-The above syntax has the unsatisfying property that --stdin, --stdout and
---stderr will appear before the command to be executed (opposite of shell
-convention). But I'm going to keep it simple for now. Otherwise I'll have to
-come with some fancy protocol to figure out what options are meant for elido
-and what are for the command it executes if the command being run has the same
-options as elido.
+The above syntax has the unsatisfying property that elido's --stdin, --stdout
+and --stderr options (see below) will appear before the command to be executed
+(opposite of shell convention). But I'm going to keep it simple for now.
+Otherwise I'll have to come with some fancy protocol to figure out what options
+are meant for elido and what are for the command it executes if the command
+being run has the same options as elido.
 
 CONVENIENCES
 ============
+
+Symbol Substitution
+-------------------
+
+The string X (configurable via --varname) occurring anywhere in the command
+line to be executed will be replaced with the input line being processed. If
+multiple lines are being processed at a time (via --chunksize), the the symbol
+X0 will the first line of the chunk, X1 the second and so on.
+
+The symbol XN will be replaced with the unpadded zero-based line number for
+which this symbol substitution is being done.
+
+These symbols are also available with in backtick sequences (below).
 
 Backtick Sequences
 ------------------
@@ -111,4 +124,4 @@ Execute N Jobs in Parallel
 
 Example: Execute 4 jobs in parallel.
 
-  cat file.txt | elido --parallelism=4 --chunksize=2 convert X0 -colorspace GRAY X1
+  cat file.txt | elido --parallelism=4 convert X0 -colorspace GRAY X1
