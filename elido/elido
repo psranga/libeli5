@@ -114,7 +114,7 @@ Execute N Jobs in Parallel
 
 Example: Execute 4 jobs in parallel.
 
-  cat file.txt | elido --parallelism=4 convert X -colorspace GRAY output/X 
+  cat file.txt | elido --parallelism=4 convert X -colorspace GRAY output/X
 
 """
 
@@ -213,7 +213,8 @@ def parse_args(inargs=None):
 
 
 def replace_backticks_and_variables_in_expr(
-        expr, values, varname, varname_escaped, line_num, cmd_context, really_eval=True):
+        expr, values, varname, varname_escaped, line_num, cmd_context,
+        really_eval=True):
     def eval_or_get_value(m):
         if m.group(1):
             return eval(m.group(1), cmd_context)
@@ -222,7 +223,6 @@ def replace_backticks_and_variables_in_expr(
         elif m.group(3):
             return cmd_context[m.group(3)]
 
-
     cmd_context[varname] = values[0]
     for i in range(len(values)):
         cmd_context[varname + str(i)] = values[i]
@@ -230,15 +230,17 @@ def replace_backticks_and_variables_in_expr(
 
     # Rely on re module's caching and keep things simple. An implementation
     # using pre-compiled objects was not faster.
-    output = re.sub('%([^%]*)%|({varname_escaped}N)|({varname_escaped}[0-9]*)'.format(
-        varname_escaped=varname_escaped), eval_or_get_value, expr)
+    re_string = '%([^%]*)%|({varname_escaped}N)|({varname_escaped}[0-9]*)'
+    output = re.sub(re_string.format(varname_escaped=varname_escaped),
+            eval_or_get_value, expr)
     return output
 
 
 def replace_backticks_and_variables(
         params, values, varname, varname_escaped, line_num, cmd_context):
     return [replace_backticks_and_variables_in_expr(
-        p, values, varname, varname_escaped, line_num, cmd_context, True) for p in params]
+        p, values, varname, varname_escaped, line_num,
+        cmd_context, True) for p in params]
 
 
 def create_intermediate_dirs(fn):
@@ -293,8 +295,8 @@ def exec_worker():
         worker_input = cmd_queue.get()
         cmd, fd_filenames, output_filenames = worker_input
         logging.debug('cmd: ' + str(cmd) +
-                     ' fd_filenames: ' + str(fd_filenames) +
-                     ' output_filenames: ' + str(output_filenames))
+                      ' fd_filenames: ' + str(fd_filenames) +
+                      ' output_filenames: ' + str(output_filenames))
         if not args.dry_run:
             open_ok, fds_to_use = compute_fds_to_use(fd_filenames)
             if open_ok:
@@ -319,17 +321,19 @@ def start_exec_workers(num_workers):
         t.daemon = True
         t.start()
 
+
 def dump_command(cmd, fd_filenames, output_filenames):
     cmd_with_quoting = ' '.join(map(pipes.quote, cmd))
     redirs = []
     cand_dirs_to_create = map(os.path.dirname, output_filenames)
-    for inout_sym, crdir, fn in zip(['<', '>', '>'], [False, True, True], fd_filenames):
+    for inout_sym, crdir, fn in zip(
+            ['<', '>', '>'], [False, True, True], fd_filenames):
         if fn != '':
             if crdir:
                 cand_dirs_to_create.append(os.path.dirname(fn))
             redirs.append(inout_sym + ' ' + pipes.quote(fn))
 
-    dirs_to_create = filter(lambda dirn : dirn != '', cand_dirs_to_create)
+    dirs_to_create = filter(lambda dirn: dirn != '', cand_dirs_to_create)
     quoted_dirs_to_create = map(pipes.quote, dirs_to_create)
     mkdir_cmd = ''
     if len(quoted_dirs_to_create) > 0:
@@ -346,7 +350,7 @@ if __name__ == '__main__':
     line_num = 0
     chunked_input = []
     for raw_line in sys.stdin:
-        if ((1+line_num) % args.stride) != 0:
+        if ((1 + line_num) % args.stride) != 0:
             continue
 
         line = raw_line.strip()
@@ -356,8 +360,8 @@ if __name__ == '__main__':
             cmd = replace_backticks_and_variables(args.cmd, chunked_input,
                     args.varname, args.varname_escaped, line_num, cmd_context)
             fd_filenames = replace_backticks_and_variables(
-                    [args.fd0, args.fd1, args.fd2], chunked_input,
-                    args.varname, args.varname_escaped, line_num, cmd_context)
+                [args.fd0, args.fd1, args.fd2], chunked_input,
+                args.varname, args.varname_escaped, line_num, cmd_context)
             output_filenames = replace_backticks_and_variables(
                 args.output, chunked_input, args.varname,
                 args.varname_escaped, line_num, cmd_context)
