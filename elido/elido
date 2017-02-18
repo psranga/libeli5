@@ -125,6 +125,7 @@ import argparse
 import subprocess
 import os
 import re
+import pipes
 try:
     from Queue import Queue
 except ImportError:
@@ -177,7 +178,9 @@ def parse_args(inargs=None):
     parser.add_argument('--parallelism', type=int, default=1,
                         help='Number of commands to run at once.')
     parser.add_argument('--dry_run', action='store_true',
-                        help="Don't actually execute the generated commands.")
+                        help="Don't actually execute the command. "
+                             'Dump the commands to be executed with Bash '
+                             'quoting.')
     parser.add_argument('cmd', nargs=argparse.REMAINDER,
                         help='The command to execute.')
 
@@ -240,6 +243,9 @@ def replace_backticks_and_variables(
 
 def create_intermediate_dirs(fn):
     dirn = os.path.dirname(fn)
+    if dirn == '':
+        return True
+
     logging.debug('Creating directory: ' + dirn)
     try:
         os.makedirs(dirn)
@@ -313,6 +319,25 @@ def start_exec_workers(num_workers):
         t.daemon = True
         t.start()
 
+def dump_command(cmd, fd_filenames, output_filenames):
+    cmd_with_quoting = ' '.join(map(pipes.quote, cmd))
+    redirs = []
+    cand_dirs_to_create = map(os.path.dirname, output_filenames)
+    for inout_sym, crdir, fn in zip(['<', '>', '>'], [False, True, True], fd_filenames):
+        if fn != '':
+            if crdir:
+                cand_dirs_to_create.append(os.path.dirname(fn))
+            redirs.append(inout_sym + ' ' + pipes.quote(fn))
+
+    dirs_to_create = filter(lambda dirn : dirn != '', cand_dirs_to_create)
+    quoted_dirs_to_create = map(pipes.quote, dirs_to_create)
+    mkdir_cmd = ''
+    if len(quoted_dirs_to_create) > 0:
+        mkdir_cmd = 'mkdir -p ' + ' '.join(quoted_dirs_to_create) + ' && '
+
+    redir_subcmd = ' '.join(redirs)
+    print mkdir_cmd + cmd_with_quoting + ' ' + redir_subcmd
+
 if __name__ == '__main__':
     parse_args()
     cmd_queue = Queue()
@@ -337,8 +362,11 @@ if __name__ == '__main__':
                 args.output, chunked_input, args.varname,
                 args.varname_escaped, line_num, cmd_context)
             worker_input = (cmd, fd_filenames, output_filenames)
-            logging.debug('queuing: ' + str(worker_input))
-            cmd_queue.put(worker_input)
+            if not args.dry_run:
+                logging.debug('queuing: ' + str(worker_input))
+                cmd_queue.put(worker_input)
+            else:
+                dump_command(cmd, fd_filenames, output_filenames)
             chunked_input = []
         line_num += 1
 
