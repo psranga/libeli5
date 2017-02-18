@@ -143,10 +143,13 @@ try:
     from Queue import Queue
 except ImportError:
     from queue import Queue
-from threading import Thread
+from threading import Thread, Lock
 
 # Will be replaced with an argparse-created object.
 args = None
+
+num_cmd_invocations_done = 0
+update_after_invocation_lock = Lock()
 
 # The functions accessible to backtick sub-commands.
 # TODO: add more functions here.
@@ -190,6 +193,9 @@ def parse_args(inargs=None):
                              'multiple outputs.')
     parser.add_argument('--parallelism', type=int, default=1,
                         help='Number of commands to run at once.')
+    parser.add_argument('--progress', type=int, default=0,
+                        help='Report progress every N command invocations to '
+                             'stderr. 0 (default) means no progress.')
     parser.add_argument('--dry_run', action='store_true',
                         help="Don't actually execute the command. "
                              'Dump the commands to be executed with Bash '
@@ -303,10 +309,11 @@ def close_fds_if_needed(fds_to_use, fd_filenames):
 
 def exec_worker():
     global cmd_queue
+    global num_cmd_invocations_done
 
     while True:
         worker_input = cmd_queue.get()
-        cmd, fd_filenames, output_filenames = worker_input
+        cmd, fd_filenames, output_filenames, progress_frequency = worker_input
         logging.debug('cmd: ' + str(cmd) +
                       ' fd_filenames: ' + str(fd_filenames) +
                       ' output_filenames: ' + str(output_filenames))
@@ -325,7 +332,18 @@ def exec_worker():
                 logging.error('Error computing fds: ' + str(worker_input))
         else:
             logging.warning('ignored: ' + str(cmd))
+
         cmd_queue.task_done()
+
+        print_progress = False
+        with update_after_invocation_lock:
+            num_cmd_invocations_done += 1
+            if progress_frequency > 0:
+                if (num_cmd_invocations_done % progress_frequency) == 0:
+                    print_progress = True
+        if print_progress:
+            sys.stderr.write('Finished: {num_done} invocations.\n'.format(
+                num_done=num_cmd_invocations_done))
 
 
 def start_exec_workers(num_workers):
@@ -378,7 +396,7 @@ if __name__ == '__main__':
             output_filenames = replace_backticks_and_variables(
                 args.output, chunked_input, args.varname,
                 args.varname_escaped, line_num, cmd_context)
-            worker_input = (cmd, fd_filenames, output_filenames)
+            worker_input = (cmd, fd_filenames, output_filenames, args.progress)
             if not args.dry_run:
                 logging.debug('queuing: ' + str(worker_input))
                 cmd_queue.put(worker_input)
