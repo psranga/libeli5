@@ -171,6 +171,8 @@ def parse_args(inargs=None):
                              'with input line.')
     parser.add_argument('--stride', type=int, default=1,
                         help='Process every Nth line, instead of every.')
+    parser.add_argument('--ignore_first_n', type=int, default=0,
+                        help='Ignore these many lines from the beginning.')
     parser.add_argument('--chunksize', type=int, default=1,
                         help='Process inputs in chunks of this many lines at a '
                              'time. First line is available as X0, second and '
@@ -379,7 +381,11 @@ if __name__ == '__main__':
     line_num = 0
     chunked_input = []
     for raw_line in sys.stdin:
-        if ((1 + line_num) % args.stride) != 0:
+        if line_num < args.ignore_first_n:
+            line_num += 1
+            continue
+
+        if ((line_num - args.ignore_first_n) % args.stride) != 0:
             line_num += 1
             continue
 
