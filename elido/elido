@@ -234,7 +234,7 @@ def parse_args(inargs=None):
 
 
 def replace_backticks_and_variables_in_expr(
-        expr, values, varname, varname_escaped, line_num, cmd_context,
+        expr, values, varname, varname_escaped, XN_value, cmd_context,
         really_eval=True):
     def eval_or_get_value(m):
         if m.group(1):
@@ -247,7 +247,7 @@ def replace_backticks_and_variables_in_expr(
     cmd_context[varname] = values[0]
     for i in range(len(values)):
         cmd_context[varname + str(i)] = values[i]
-    cmd_context[varname + 'N'] = str(line_num)
+    cmd_context[varname + 'N'] = XN_value
 
     # Rely on re module's caching and keep things simple. An implementation
     # using pre-compiled objects was not faster.
@@ -258,9 +258,9 @@ def replace_backticks_and_variables_in_expr(
 
 
 def replace_backticks_and_variables(
-        params, values, varname, varname_escaped, line_num, cmd_context):
+        params, values, varname, varname_escaped, XN_value, cmd_context):
     return [replace_backticks_and_variables_in_expr(
-        p, values, varname, varname_escaped, line_num,
+        p, values, varname, varname_escaped, XN_value,
         cmd_context, True) for p in params]
 
 
@@ -378,29 +378,30 @@ if __name__ == '__main__':
     cmd_queue = Queue()
     start_exec_workers(args.parallelism)
 
-    line_num = 0
+    line_num = -1
     chunked_input = []
     for raw_line in sys.stdin:
+        line_num += 1
+
         if line_num < args.ignore_first_n:
-            line_num += 1
             continue
 
         if ((line_num - args.ignore_first_n) % args.stride) != 0:
-            line_num += 1
             continue
 
         line = raw_line.strip()
+        XN_value = str(line_num)
 
         chunked_input.append(line)
         if len(chunked_input) == args.chunksize:
             cmd = replace_backticks_and_variables(args.cmd, chunked_input,
-                    args.varname, args.varname_escaped, line_num, cmd_context)
+                    args.varname, args.varname_escaped, XN_value, cmd_context)
             fd_filenames = replace_backticks_and_variables(
                 [args.fd0, args.fd1, args.fd2], chunked_input,
-                args.varname, args.varname_escaped, line_num, cmd_context)
+                args.varname, args.varname_escaped, XN_value, cmd_context)
             output_filenames = replace_backticks_and_variables(
                 args.output, chunked_input, args.varname,
-                args.varname_escaped, line_num, cmd_context)
+                args.varname_escaped, XN_value, cmd_context)
             worker_input = (cmd, fd_filenames, output_filenames, args.progress)
             if not args.dry_run:
                 logging.debug('queuing: ' + str(worker_input))
@@ -408,7 +409,6 @@ if __name__ == '__main__':
             else:
                 dump_command(cmd, fd_filenames, output_filenames)
             chunked_input = []
-        line_num += 1
 
     try:
         cmd_queue.join()
