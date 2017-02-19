@@ -380,6 +380,7 @@ if __name__ == '__main__':
     chunked_input = []
     for raw_line in sys.stdin:
         if ((1 + line_num) % args.stride) != 0:
+            line_num += 1
             continue
 
         line = raw_line.strip()
