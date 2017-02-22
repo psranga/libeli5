@@ -153,10 +153,15 @@ update_after_invocation_lock = Lock()
 
 # The functions accessible to backtick sub-commands.
 # TODO: add more functions here.
-cmd_context = {'__builtins__': None, 'basename': os.path.basename,
-               'relpath': os.path.relpath,
-               'dirname': os.path.dirname,
-               'md5': lambda x: hashlib.md5(x).hexdigest()}
+cmd_context = {
+        '__builtins__': None,
+        'basename': os.path.basename,
+        'relpath': os.path.relpath,
+        'dirname': os.path.dirname,
+        'md5': lambda x: hashlib.md5(x).hexdigest(),
+        'file_root': lambda x: os.path.splitext(x)[0],
+        'file_ext': lambda x: os.path.splitext(x)[1],
+        'change_ext': lambda x, new_ext: os.path.splitext(x)[0] + new_ext}
 
 
 def parse_args(inargs=None):
