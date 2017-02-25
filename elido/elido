@@ -444,7 +444,11 @@ def dump_command(cmd, fd_filenames, output_filenames):
         mkdir_cmd = 'mkdir -p ' + ' '.join(quoted_dirs_to_create) + ' && '
 
     redir_subcmd = ' '.join(redirs)
-    print mkdir_cmd + cmd_with_quoting + ' ' + redir_subcmd
+    sys.stdout.write(mkdir_cmd)
+    sys.stdout.write(cmd_with_quoting)
+    sys.stdout.write(' ')
+    sys.stdout.write(redir_subcmd)
+    sys.stdout.write('\n')
 
 
 def do_cross_product(filenames):
