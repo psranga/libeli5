@@ -192,6 +192,7 @@ import os
 import re
 import pipes
 import itertools
+import time
 
 try:
     from Queue import Queue
@@ -488,14 +489,31 @@ def do_elido():
                 dump_command(cmd, fd_filenames, output_filenames)
             chunked_input = []
 
-    try:
-        cmd_queue.join()
-    except KeyboardInterrupt:
-        sys.exit(2)
+    # This is running in the main thread. So check for all items to be removed
+    # from queue in non-blocking manner.  Otherwise cmd_queue.join() will block
+    # until all items are dequeued, preventing handling Ctrl-C in the main code
+    # block below.
+    while not cmd_queue.empty():
+        time.sleep(0.1)
+
+    # Queue empty just means items were dequeued. Now wait for them to be
+    # processed. There should be at most args.parallelism jobs in flight
+    # now. In most practical situations, hitting Ctrl-C here will break
+    # out quickly, even though join() is blocking, because the Ctrl-C gets
+    # sent all processes in the terminal, and most well-behaved processes will
+    # exit on ^C, leading to this join() here unblocking pretty soon.
+    #
+    # Ideally, there should be a join variant with a timeout so that we
+    # can join in a non-blocking manner. Consider refactoring this to use
+    # different queueing API. E.g., multiprocessing.Pool.
+    cmd_queue.join()
 
 if __name__ == '__main__':
-    parse_args()
-    if running_as_cross_product:
-        do_cross_product(args.cmd)
-    else:
-        do_elido()
+    try:
+        parse_args()
+        if running_as_cross_product:
+            do_cross_product(args.cmd)
+        else:
+            do_elido()
+    except KeyboardInterrupt:
+        sys.exit(2)
