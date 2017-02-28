@@ -180,9 +180,9 @@ $ seq 0 110 | ./elido --chunksize=10 echo X0 > quality.txt
 $ /bin/ls -1 *.jpg | python elido.py cross_product - quality.txt | \
     python elido.py --chunksize=2 \
       convert X0 -quality X1 output/'%file_root(X0)%'-X1.jpg
-
 """
 
+import base64
 import logging
 import hashlib
 import sys
@@ -215,6 +215,14 @@ cmd_context = {
     'relpath': os.path.relpath,
     'dirname': os.path.dirname,
     'md5': lambda x: hashlib.md5(x).hexdigest(),
+    'sha1': lambda x: hashlib.sha1(x).hexdigest(),
+    'sha256': lambda x: hashlib.sha256(x).hexdigest(),
+    'safe_base64': lambda x: base64.urlsafe_b64encode(x),
+    'decode_safeb64': lambda x: base64.urlsafe_b64decode(x),
+    'base64': lambda x: base64.standard_b64encode(x),
+    'decode_base64': lambda x: base64.standard_b64decode(x),
+    'padded_int' : lambda width, x : '%0*d' % (width, int(x)),
+    'readable_num' : lambda width, decimals, x : '%*.*f' % (width, decimals, float(x)),
     'int' : int,
     'float' : float,
     'str' : str,
