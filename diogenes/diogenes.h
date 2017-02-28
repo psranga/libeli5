@@ -191,7 +191,7 @@ class DioTest {
   // passing tests. If 'record' is false, print a report to
   // stdout saying how many passed and failed.
   static int RecordExpectStatusOrPrintResults(bool value, int op,
-                                               const std::string& test_name = "") {
+                                               const char* test_name = nullptr) {
     static int num_tests_run = 0;
     static int passed = 0;
     static int failed = 0;
@@ -208,9 +208,11 @@ class DioTest {
     } else if (op == 3) {
       return failed;
     } else if (op == 4) {
-      failed_test_names.push_back(test_name);
-      std::cout << "new failed_test_names.size: " << failed_test_names.size()
-                << std::endl;
+      if (test_name != nullptr) {
+        failed_test_names.push_back(string(test_name));
+        std::cout << "new failed_test_names.size: " << failed_test_names.size()
+                  << std::endl;
+      }
     } else if (op == 0) {
       std::cout << "Diogenes results: Ran " << num_tests_run
                 << " tests. Num failed tests: " << failed_test_names.size()
