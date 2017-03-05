@@ -319,7 +319,7 @@ def replace_backticks_and_variables_in_expr(
         really_eval=True):
     def eval_or_get_value(m):
         if m.group(1):
-            return eval(m.group(1), cmd_context)
+            return str(eval(m.group(1), cmd_context))
         elif m.group(2):
             return cmd_context[m.group(2)]
         elif m.group(3):
