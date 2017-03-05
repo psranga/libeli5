@@ -71,9 +71,9 @@ Sequences of '%...%' within the command line to be executed are treated as
 Python expressions that will be evaluated in a context in which the variable
 'X' will contain the line being processed.
 
-Example: print the md5 checksum followed by the input of each line in a file:
+Example: print the sha256 checksum followed by the input of each line in a file:
 
-  cat file.txt | elido echo '%md5(X)%' X
+  cat file.txt | elido echo '%sha256(X)%' X
 
 Straightforward Redirection of Executed Command's Output
 --------------------------------------------------------
@@ -83,7 +83,7 @@ about two levels of quoting. I write my utilties to read and write stdin/stdout
 instead of also providing the ability write to files, and have to jump through
 hoops to drive them with xargs. Elido makes this easy:
 
-  cat file.txt | elido --stdin=X --stdout='output/%md5(X)%' myutil
+  cat file.txt | elido --stdin=X --stdout='output/%sha256(X)%' myutil
 
 Can Create Intermediate Directories of Generated Output
 -------------------------------------------------------
@@ -113,7 +113,7 @@ automatically created.
 Example: If output files are named after the MD5 of the input filename and put
 in subdirectories named after the first two characters of the MD5 hex checksum.
 
-  cat file.txt | elido --stdin=X --stdout='output/%md5(X)[0:2]%/%md5(X)%' myutil
+  cat file.txt | elido --stdin=X --stdout='output/%sha256(X)[0:2]%/%sha256(X)%' myutil
 
 Process N Lines at A Time
 -------------------------
