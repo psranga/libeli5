@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 # vim: set filetype=python:
 
 """This tool should NOT BE USED ON UNTRUSED INPUT (it uses 'eval').
