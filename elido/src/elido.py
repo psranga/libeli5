@@ -14,7 +14,7 @@ is cleaner since it saves from having to think about multiple levels quoting.
 
 Also input lines won't be split into individual arguments. The whole line will
 be presented as is. Splitting a line into arguments is a misfeature IMHO. If
-lines (e.g., filenames) you're processing may contain newlines don't use 
+lines (e.g., filenames) you're processing may contain newlines don't use
 Elido. We'll eventually support NUL-terminated inputs.
 
 INSTALLATION
@@ -221,11 +221,11 @@ cmd_context = {
     'decode_safeb64': lambda x: base64.urlsafe_b64decode(x),
     'base64': lambda x: base64.standard_b64encode(x),
     'decode_base64': lambda x: base64.standard_b64decode(x),
-    'padded_int' : lambda width, x : '%0*d' % (width, int(x)),
-    'readable_num' : lambda width, decimals, x : '%*.*f' % (width, decimals, float(x)),
-    'int' : int,
-    'float' : float,
-    'str' : str,
+    'padded_int': lambda width, x: '%0*d' % (width, int(x)),
+    'readable_num': lambda width, decimals, x: '%*.*f' % (width, decimals, float(x)),
+    'int': int,
+    'float': float,
+    'str': str,
     'file_root': lambda x: os.path.splitext(x)[0],
     'file_ext': lambda x: os.path.splitext(x)[1],
     'change_ext': lambda x, new_ext: os.path.splitext(x)[0] + new_ext}
@@ -523,7 +523,8 @@ def do_elido():
     # different queueing API. E.g., multiprocessing.Pool.
     cmd_queue.join()
 
-if __name__ == '__main__':
+
+def main():
     try:
         parse_args()
         if running_as_cross_product:
@@ -532,3 +533,6 @@ if __name__ == '__main__':
             do_elido()
     except KeyboardInterrupt:
         sys.exit(2)
+
+if __name__ == '__main__':
+    main()
