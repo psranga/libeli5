@@ -202,7 +202,6 @@ from threading import Thread, Lock
 
 # Will be replaced with an argparse-created object.
 args = None
-running_as_cross_product = False
 
 num_cmd_invocations_done = 0
 update_after_invocation_lock = Lock()
@@ -233,14 +232,27 @@ cmd_context = {
 cmd_queue = None
 
 
-def parse_args(inargs=None):
-    global args
-    global running_as_cross_product
 
-    parser = argparse.ArgumentParser(description='elido')
-    parser.add_argument('--log_level', type=str,
-                        default='WARN',
-                        help='Logging level. E.g., DEBUG, INFO, WARN, ERROR.')
+def compute_args_to_use(inargs):
+    try:
+        # If there's a '--' anywhere, that takes precedence.
+        dash_dash_pos = inargs.index('--')
+        args_to_use = inargs[:dash_dash_pos]
+        cmd_range = (dash_dash_pos + 1, len(inargs))
+    except ValueError:
+        args_to_use = inargs
+
+    return args_to_use
+
+def build_parser(inargs=None):
+    # Options common to cross_product subcommand and version without subcommand.
+    common_parser = argparse.ArgumentParser(add_help=False)
+    common_parser.add_argument('--log_level', type=str,
+            default='WARN',
+            help='Logging level. E.g., DEBUG, INFO, WARN, ERROR.')
+
+    # Arg parser for main functionality: no subcommands.
+    parser = argparse.ArgumentParser(description='elido', parents=[common_parser])
     parser.add_argument('--varname', type=str, default='X',
                         help='Placeholder in commands that will be replaced '
                              'with input line.')
@@ -279,40 +291,33 @@ def parse_args(inargs=None):
                              'quoting.')
     parser.add_argument('cmd', nargs=argparse.REMAINDER,
                         help='The command to execute.')
+    parser.set_defaults(main_func=do_elido, running_as_cross_product=False)
 
-    inargs_to_use = inargs if args else sys.argv[1:]
+    # Arg parser for secondary functionality: generate all permutations.
+    cross_product_parser = argparse.ArgumentParser(description='elido cross_product', parents=[common_parser])
+    cross_product_parser.add_argument('infiles', nargs=argparse.REMAINDER,
+                        help='Each file is a set of lines. Cross-product of '
+                        'these files is generated "vertically". Each line of '
+                        'permutation occurs on a separate line. Useful with '
+                        '--chunksize of elido.')
+    cross_product_parser.set_defaults(main_func=do_cross_product, running_as_cross_product=True)
 
-    running_as_cross_product = False
-    if len(inargs_to_use) > 0 and inargs_to_use[0] == 'cross_product':
-        running_as_cross_product = True
-        inargs_to_use = inargs_to_use[1:]
+    return (parser, cross_product_parser)
 
-    try:
-        dash_dash_pos = inargs_to_use.index('--')
-        args_to_use = inargs_to_use[:dash_dash_pos]
-        cmd_range = (dash_dash_pos + 1, len(inargs_to_use))
-    except ValueError:
-        last_opt_pos = -1
-        for i in range(len(inargs_to_use)):
-            if inargs_to_use[i][0:2] == '--':
-                last_opt_pos = i
-            else:
-                break
-        args_to_use = inargs_to_use[:last_opt_pos + 1]
-        cmd_range = (last_opt_pos + 1, len(inargs_to_use))
+def parse_args(inargs):
+    elido_parser, cross_product_parser = build_parser()
+
+    args_to_use = compute_args_to_use(inargs)
+
+    if len(args_to_use) > 0 and args_to_use[0] == 'cross_product':
+        args_to_use = args_to_use[1:]
+        parser = cross_product_parser
+    else:
+        parser = elido_parser
 
     args = parser.parse_args(args_to_use)
-    args.cmd = inargs_to_use[cmd_range[0]:cmd_range[1]]
 
-    # varname will be used in a regular expression. Escape each character to
-    # prevent XSS.
-    args.varname_escaped = ''.join(['\\' + c for c in args.varname])
-
-    logging.basicConfig(stream=sys.stderr, level=getattr(
-        logging, args.log_level.upper()))
-
-    logging.debug('config: ' + str(args))
-
+    return args
 
 def replace_backticks_and_variables_in_expr(
         expr, values, varname, varname_escaped, XN_value, cmd_context,
@@ -459,14 +464,15 @@ def dump_command(cmd, fd_filenames, output_filenames):
     sys.stdout.write('\n')
 
 
-def do_cross_product(filenames):
+def do_cross_product(args):
+    filenames = args.infiles
     handles = [open(fn, 'r') if fn != '-' else sys.stdin for fn in filenames]
     for combo in itertools.product(*handles):
         for elem in combo:
             sys.stdout.write(elem)
 
 
-def do_elido():
+def do_elido(args):
     global cmd_queue
 
     cmd_queue = Queue()
@@ -526,11 +532,15 @@ def do_elido():
 
 def main():
     try:
-        parse_args()
-        if running_as_cross_product:
-            do_cross_product(args.cmd)
+        args = parse_args(sys.argv[1:])
+        logging.basicConfig(stream=sys.stderr, level=getattr(
+            logging, args.log_level.upper()))
+        logging.debug('config: ' + str(args))
+
+        if args.running_as_cross_product:
+            do_cross_product(args)
         else:
-            do_elido()
+            do_elido(args)
     except KeyboardInterrupt:
         sys.exit(2)
 
