@@ -75,6 +75,69 @@ Example: print the sha256 checksum followed by the input of each line in a file:
 
   cat file.txt | elido echo '%sha256(X)%' X
 
+Type Inference
+--------------
+
+If the input value is a float or int (decimal or hex (0x prefix)), the symbol
+X will refer to a float or int-type object *ONLY IN BACKTICK EXPRESSIONS*. A
+bare X will always get the verbatim value.
+
+Example:
+
+  $ seq 1 4 | elido echo '%X*2%'
+  2
+  4
+  6
+  8
+
+  $ seq 1 4 | sed -e 's/$/.500' | elido echo X '%X%'
+  1.500 1.5
+  2.500 2.0
+  3.500 3.5
+  4.500 4.5
+
+Use --keep_input_as_string to prevent this:
+
+Example:
+
+  $ seq 1 4 | elido echo --keep_input_as_string '%X*2%'
+  11
+  22
+  33
+  44
+
+If you want the verbatim string in some backtick expressions but not
+others, use X_raw to get the string and X to get the converted version.
+
+  $ seq 1 4 | sed -e 's/$/.500' | elido echo '%X_raw%' '%X%'
+  1.500 1.5
+  2.500 2.0
+  3.500 3.5
+  4.500 4.5
+
+
+Side Inputs
+-----------
+
+Even with Elido, I found myself in shell quoting hell when trying to pass
+environment variables containing side inputs (e.g., configurable zoom factor
+to be applied to multiple images) to an elido-driven command.
+
+The --define switch simplifies and makes readable code like this:
+
+  $ export K=2 && seq 1 4 | elido echo "%X*$K%"
+
+Example:
+
+  $ seq 1 4 | elido --define K 2 echo '%X*K%'
+  2
+  4
+  6
+  8
+
+Type inference will always be carried out on side inputs. Open a bug if think of
+a good reason to have an option to disable this.
+
 Straightforward Redirection of Executed Command's Output
 --------------------------------------------------------
 
