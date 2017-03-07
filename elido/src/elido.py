@@ -232,6 +232,54 @@ cmd_context = {
 cmd_queue = None
 
 
+def convert_string_to_typed_object(s):
+    """Tries to convert string s into int, float, bool. If none work,
+    returns s. Helps keep backtick expressions brief so user doesn't have to
+    type conversions explicitly.
+
+    >>> type_converter('1.2')
+    1.2
+    >>> type_converter('1.0')
+    1.0
+    >>> type_converter('1')
+    1
+    >>> type_converter('0')
+    0
+    >>> type_converter('false')
+    False
+    >>> type_converter('False')
+    False
+    >>> type_converter('True')
+    True
+    >>> type_converter('true')
+    True
+    >>> type_converter('0x1234')
+    4660
+    """
+    try:
+        return int(s)
+    except ValueError:
+        pass
+
+    # try base 16. 0x1234 is likely to a common use-case.
+    try:
+        return int(s, 16)
+    except ValueError:
+        pass
+
+    try:
+        return float(s)
+    except ValueError:
+        pass
+
+    if s.lower() == 'false':
+        return False
+    elif s.lower() == 'true':
+        return True
+
+    # treat it as a string.
+    return s
+
 
 def compute_args_to_use(inargs):
     try:
@@ -256,6 +304,23 @@ def build_parser(inargs=None):
     parser.add_argument('--varname', type=str, default='X',
                         help='Placeholder in commands that will be replaced '
                              'with input line.')
+    parser.add_argument('--define', nargs=2, action='append', default=list(),
+                        help='Make this symbol available in backtick commands. '
+                        'Type inference will be done. Use --rawsym to prevent. '
+                        'Example: --define NC 20 --stdout=%NC*8%.txt (stdout '
+                        'goes to a file named 160.txt')
+    parser.add_argument('--rawsym', nargs=2, action='append', default=list(),
+                        help='Make this symbol available in backtick commands. '
+                        'Defines a string (no type inference). Use --define '
+                        'to get type inference. '
+                        'Example: --rawsym NC 4 --stdout=%NC*8%.txt (stdout '
+                        'goes to a file named 44444444.txt')
+    parser.add_argument('--keep_input_as_string', action='store_true',
+                        help='By default, if the input line is a string that '
+                        'can be converted to a Python float/int/bool, it will '
+                        'converted as a convenience so that backtick functions '
+                        'do not have do it. A bare reference to varname will '
+                        'always get the value from the input verbatim.')
     parser.add_argument('--stride', type=int, default=1,
                         help='Process every Nth line, instead of every.')
     parser.add_argument('--ignore_first_n', type=int, default=0,
@@ -320,20 +385,28 @@ def parse_args(inargs):
     return args
 
 def replace_backticks_and_variables_in_expr(
-        expr, values, varname, varname_escaped, XN_value, cmd_context,
+        expr, values, varname, varname_escaped, XN_value, keep_input_as_string, cmd_context,
         really_eval=True):
     def eval_or_get_value(m):
         if m.group(1):
             return str(eval(m.group(1), cmd_context))
         elif m.group(2):
-            return cmd_context[m.group(2)]
+            return str(cmd_context[varname + '_raw'])
         elif m.group(3):
-            return cmd_context[m.group(3)]
+            return str(cmd_context[m.group(3) + '_raw'])
 
-    cmd_context[varname] = values[0]
+    if keep_input_as_string:
+        type_converter_func = lambda x : x
+    else:
+        type_converter_func = convert_string_to_typed_object
+
+    cmd_context[varname + '_raw'] = values[0]
+    cmd_context[varname] = type_converter_func(values[0])
     for i in range(len(values)):
-        cmd_context[varname + str(i)] = values[i]
-    cmd_context[varname + 'N'] = XN_value
+        cmd_context[varname + str(i)] = type_converter_func(values[i])
+        cmd_context[varname + str(i) + '_raw'] = values[i]
+    cmd_context[varname + 'N'] = type_converter_func(XN_value)
+    cmd_context[varname + 'N_raw'] = XN_value
 
     # Rely on re module's caching and keep things simple. An implementation
     # using pre-compiled objects was not faster.
@@ -344,10 +417,10 @@ def replace_backticks_and_variables_in_expr(
 
 
 def replace_backticks_and_variables(
-        params, values, varname, varname_escaped, XN_value, cmd_context):
+        params, values, varname, varname_escaped, XN_value, keep_input_as_string, cmd_context):
     return [replace_backticks_and_variables_in_expr(
         p, values, varname, varname_escaped, XN_value,
-        cmd_context, True) for p in params]
+        keep_input_as_string, cmd_context, True) for p in params]
 
 
 def create_intermediate_dirs(fn):
@@ -475,6 +548,18 @@ def do_cross_product(args):
 def do_elido(args):
     global cmd_queue
 
+    # varname will be used in a regular expression. Escape each character to
+    # prevent XSS.
+    args.varname_escaped = ''.join(['\\' + c for c in args.varname])
+
+    # add the side inputs to cmd_context (define)
+    for varname, varvalue in args.define:
+        cmd_context[varname] = convert_string_to_typed_object(varvalue)
+
+    # add the side inputs to cmd_context (rawsym)
+    for varname, varvalue in args.rawsym:
+        cmd_context[varname] = varvalue
+
     cmd_queue = Queue()
     start_exec_workers(args.parallelism)
 
@@ -495,13 +580,13 @@ def do_elido(args):
         chunked_input.append(line)
         if len(chunked_input) == args.chunksize:
             cmd = replace_backticks_and_variables(args.cmd, chunked_input,
-                                                  args.varname, args.varname_escaped, XN_value, cmd_context)
+                                                  args.varname, args.varname_escaped, XN_value, args.keep_input_as_string, cmd_context)
             fd_filenames = replace_backticks_and_variables(
                 [args.fd0, args.fd1, args.fd2], chunked_input,
-                args.varname, args.varname_escaped, XN_value, cmd_context)
+                args.varname, args.varname_escaped, XN_value, args.keep_input_as_string, cmd_context)
             output_filenames = replace_backticks_and_variables(
                 args.output, chunked_input, args.varname,
-                args.varname_escaped, XN_value, cmd_context)
+                args.varname_escaped, XN_value, args.keep_input_as_string, cmd_context)
             worker_input = (cmd, fd_filenames, output_filenames, args.progress)
             if not args.dry_run:
                 logging.debug('queuing: ' + str(worker_input))
