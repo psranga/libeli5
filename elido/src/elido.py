@@ -1,8 +1,8 @@
 #!/usr/bin/python2
 # vim: set filetype=python:
 
-"""This tool should NOT BE USED ON UNTRUSED INPUT (it uses 'eval').
-YOU HAVE BEEN WARNED.
+"""This tool should NOT BE USED ON UNTRUSED INPUT (it uses 'eval'). YOU HAVE
+BEEN WARNED.
 
 Elido fixes an xargs annoyance that's bugged me for long: I frequently had to
 learn a lot more about shell quoting rules than I wanted to, especially when
@@ -14,7 +14,7 @@ is cleaner since it saves from having to think about multiple levels quoting.
 
 Also input lines won't be split into individual arguments. The whole line will
 be presented as is. Splitting a line into arguments is a misfeature IMHO. If
-lines (e.g., filenames) you're processing may contain newlines don't use 
+lines (e.g., filenames) you're processing may contain newlines don't use
 Elido. We'll eventually support NUL-terminated inputs.
 
 INSTALLATION
@@ -271,6 +271,7 @@ $ find . -maxdepth 1 -name '*.jpg' | \
     elido cross_product - quality.txt | \
     elido --chunksize=2 \
       convert X0 -quality X1 output/'%file_root(X0)%'-X1.jpg
+
 """
 
 import base64
@@ -311,11 +312,11 @@ cmd_context = {
     'decode_safeb64': lambda x: base64.urlsafe_b64decode(x),
     'base64': lambda x: base64.standard_b64encode(x),
     'decode_base64': lambda x: base64.standard_b64decode(x),
-    'padded_int' : lambda x, width : '%0*d' % (int(width), int(x)),
-    'readable_num' : lambda x, width, decimals : '%*.*f' % (width, decimals, float(x)),
-    'int' : int,
-    'float' : float,
-    'str' : str,
+    'padded_int': lambda x, width: '%0*d' % (int(width), int(x)),
+    'readable_num': lambda x, width, decimals: '%*.*f' % (width, decimals, float(x)),
+    'int': int,
+    'float': float,
+    'str': str,
     'file_root': lambda x: os.path.splitext(x)[0],
     'file_ext': lambda x: os.path.splitext(x)[1],
     'change_ext': lambda x, new_ext: os.path.splitext(x)[0] + new_ext}
@@ -324,9 +325,9 @@ cmd_queue = None
 
 
 def convert_string_to_typed_object(s):
-    """Tries to convert string s into int or float. If none work,
-    returns s. Helps keep backtick expressions brief so user doesn't have to
-    type conversions explicitly.
+    """Tries to convert string s into int or float. If none work, returns s.
+    Helps keep backtick expressions brief so user doesn't have to type
+    conversions explicitly.
 
     >>> convert_string_to_typed_object('1.2')
     1.2
@@ -338,6 +339,7 @@ def convert_string_to_typed_object(s):
     0
     >>> convert_string_to_typed_object('0x1234')
     4660
+
     """
     try:
         return int(s)
@@ -370,15 +372,18 @@ def compute_args_to_use(inargs):
 
     return args_to_use
 
+
 def build_parser(inargs=None):
-    # Options common to cross_product subcommand and version without subcommand.
+    # Options common to cross_product subcommand and version without
+    # subcommand.
     common_parser = argparse.ArgumentParser(add_help=False)
     common_parser.add_argument('--log_level', type=str,
-            default='WARN',
-            help='Logging level. E.g., DEBUG, INFO, WARN, ERROR.')
+                               default='WARN',
+                               help='Logging level. E.g., DEBUG, INFO, WARN, ERROR.')
 
     # Arg parser for main functionality: no subcommands.
-    parser = argparse.ArgumentParser(description='elido', parents=[common_parser])
+    parser = argparse.ArgumentParser(
+        description='elido', parents=[common_parser])
     parser.add_argument('--varname', type=str, default='X',
                         help='Placeholder in commands that will be replaced '
                              'with input line.')
@@ -437,15 +442,18 @@ def build_parser(inargs=None):
     parser.set_defaults(main_func=do_elido, running_as_cross_product=False)
 
     # Arg parser for secondary functionality: generate all permutations.
-    cross_product_parser = argparse.ArgumentParser(description='elido cross_product', parents=[common_parser])
+    cross_product_parser = argparse.ArgumentParser(
+        description='elido cross_product', parents=[common_parser])
     cross_product_parser.add_argument('infiles', nargs=argparse.REMAINDER,
-                        help='Each file is a set of lines. Cross-product of '
-                        'these files is generated "vertically". Each line of '
-                        'permutation occurs on a separate line. Useful with '
-                        '--chunksize of elido.')
-    cross_product_parser.set_defaults(main_func=do_cross_product, running_as_cross_product=True)
+                                      help='Each file is a set of lines. Cross-product of '
+                                      'these files is generated "vertically". Each line of '
+                                      'permutation occurs on a separate line. Useful with '
+                                      '--chunksize of elido.')
+    cross_product_parser.set_defaults(
+        main_func=do_cross_product, running_as_cross_product=True)
 
     return (parser, cross_product_parser)
+
 
 def parse_args(inargs):
     elido_parser, cross_product_parser = build_parser()
@@ -462,6 +470,7 @@ def parse_args(inargs):
 
     return args
 
+
 def replace_backticks_and_variables_in_expr(
         expr, values, varname, varname_escaped, XN_value, keep_input_as_string, cmd_context,
         really_eval=True):
@@ -474,7 +483,7 @@ def replace_backticks_and_variables_in_expr(
             return str(cmd_context[m.group(3) + '_raw'])
 
     if keep_input_as_string:
-        type_converter_func = lambda x : x
+        type_converter_func = lambda x: x
     else:
         type_converter_func = convert_string_to_typed_object
 
