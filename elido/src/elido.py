@@ -245,14 +245,6 @@ def convert_string_to_typed_object(s):
     1
     >>> type_converter('0')
     0
-    >>> type_converter('false')
-    False
-    >>> type_converter('False')
-    False
-    >>> type_converter('True')
-    True
-    >>> type_converter('true')
-    True
     >>> type_converter('0x1234')
     4660
     """
@@ -271,11 +263,6 @@ def convert_string_to_typed_object(s):
         return float(s)
     except ValueError:
         pass
-
-    if s.lower() == 'false':
-        return False
-    elif s.lower() == 'true':
-        return True
 
     # treat it as a string.
     return s
