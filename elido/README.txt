@@ -41,13 +41,6 @@ specification of the command to be run for each value in the input.
 If the command you're trying to run itself starts with '--' (!!!), then add the
 argument '--' before the command starts.
 
-The above syntax has the unsatisfying property that elido's --stdin, --stdout
-and --stderr options (see below) will appear before the command to be executed
-(opposite of shell convention). But I'm going to keep it simple for now.
-Otherwise I'll have to come with some fancy protocol to figure out what options
-are meant for elido and what are for the command it executes if the command
-being run has the same options as elido.
-
 CONVENIENCES
 ============
 
@@ -62,7 +55,7 @@ X0 will the first line of the chunk, X1 the second and so on.
 The symbol XN will be replaced with the unpadded zero-based line number for
 which this symbol substitution is being done.
 
-These symbols are also available with in backtick sequences (below).
+These symbols are also available with in backtick expressions (see below).
 
 Backtick Expressions (%...%)
 ----------------------------
@@ -73,7 +66,12 @@ Python expressions that will be evaluated in a context in which the variable
 
 Example: print the sha256 checksum followed by the input of each line in a file:
 
-  cat file.txt | elido echo '%sha256(X)%' X
+  $ cat file.txt | elido echo '%sha256(X)%' X
+
+TODO: Add info here on what function are available.
+TODO: List the available functions when --help is given.
+
+For now, look at the source file for the definition of the global cmd_context.
 
 Type Inference (use --keep_input_as_string to disable)
 ------------------------------------------------------
@@ -203,9 +201,9 @@ in subdirectories named after the first two characters of the MD5 hex checksum.
 Process N Lines at A Time (--chunksize)
 ---------------------------------------
 
-Elido can read N lines of input and present the N values as a list. This is
-useful if the input is formatted "vertically" i.e., each field on a separate
-line instead of "horizontally" as in a CSV).
+Elido can read N lines of input and present the N values as a list. Input MUST
+BE formatted "vertically" i.e., each field on a separate line instead of
+"horizontally" as in a CSV.
 
 Example: Read in a file contain 1..4 interleaved with 11..14:
 
@@ -216,6 +214,11 @@ Example: Read in a file contain 1..4 interleaved with 11..14:
   3+10 is 13
   4+10 is 14
 
+An obvious limitation is that every chunk SHOULD be the same size.
+
+TODO: Add a subcommand to convert CSV to "vertically" formatted files.
+TODO: Look into whether csv input should be supported instead of/in addition to
+chunked input.
 
 Execute N Jobs in Parallel (--parallelism)
 ------------------------------------------
