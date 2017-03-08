@@ -328,15 +328,15 @@ def convert_string_to_typed_object(s):
     returns s. Helps keep backtick expressions brief so user doesn't have to
     type conversions explicitly.
 
-    >>> type_converter('1.2')
+    >>> convert_string_to_typed_object('1.2')
     1.2
-    >>> type_converter('1.0')
+    >>> convert_string_to_typed_object('1.0')
     1.0
-    >>> type_converter('1')
+    >>> convert_string_to_typed_object('1')
     1
-    >>> type_converter('0')
+    >>> convert_string_to_typed_object('0')
     0
-    >>> type_converter('0x1234')
+    >>> convert_string_to_typed_object('0x1234')
     4660
     """
     try:
